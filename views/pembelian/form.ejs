@@ -1,0 +1,270 @@
+<%- include('../header.ejs') %>
+
+<div class="breadcrumb">
+  <a href="/pembelian">Pembelian</a> <span>›</span> Tambah Pembelian Baru
+</div>
+
+<div class="form-layout">
+  <!-- Form Panel Kiri -->
+  <div class="form-main">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">🛒 Form Input Pembelian</h2>
+        <span class="po-number-badge"><%= noPO %></span>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="/pembelian" id="formPembelian">
+
+          <!-- Data Header PO -->
+          <div class="form-section">
+            <div class="form-section-title">Informasi Pembelian</div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">No. PO <span class="required">*</span></label>
+                <input type="text" class="input input-disabled" value="<%= noPO %>" readonly>
+                <p class="form-hint">Nomor PO dibuat otomatis oleh sistem</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tanggal Pembelian <span class="required">*</span></label>
+                <input type="date" name="tanggal_pembelian" class="input" value="<%= today %>" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nama Supplier <span class="required">*</span></label>
+              <input type="text" name="supplier" class="input" placeholder="Nama distributor atau supplier..." required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Catatan</label>
+              <textarea name="catatan" class="input input-textarea" placeholder="Keterangan tambahan (opsional)..." rows="2"></textarea>
+            </div>
+          </div>
+
+          <!-- Tabel Item Produk -->
+          <div class="form-section">
+            <div class="form-section-header">
+              <div class="form-section-title">Daftar Produk yang Dibeli</div>
+              <button type="button" class="btn btn-outline btn-sm" id="btnTambahItem">+ Tambah Item</button>
+            </div>
+
+            <div class="items-container" id="itemsContainer">
+              <!-- Item Row Template (akan diisi via JS) -->
+              <div class="item-row" id="item-0">
+                <div class="item-row-header">
+                  <span class="item-number">Item 1</span>
+                  <button type="button" class="btn-remove-item" onclick="removeItem(this)" disabled>✕</button>
+                </div>
+                <div class="form-row-3">
+                  <div class="form-group">
+                    <label class="form-label">Produk <span class="required">*</span></label>
+                    <select name="produk_id" class="input select-produk" onchange="fillHarga(this)" required>
+                      <option value="">— Pilih Produk —</option>
+                      <% produk.forEach(p => { %>
+                        <option value="<%= p.id %>" 
+                                data-harga="<%= p.harga_beli %>"
+                                data-stok="<%= p.jumlah_stock %>"
+                                data-satuan="<%= p.satuan %>">
+                          <%= p.kode_produk %> - <%= p.nama_produk %> (Stok: <%= p.jumlah_stock %>)
+                        </option>
+                      <% }) %>
+                    </select>
+                  </div>
+                  <div class="form-group form-group-sm">
+                    <label class="form-label">Harga Beli (Rp) <span class="required">*</span></label>
+                    <input type="number" name="harga_beli" class="input input-harga" 
+                           placeholder="0" min="0" step="100" onchange="hitungSubtotal(this)" required>
+                  </div>
+                  <div class="form-group form-group-sm">
+                    <label class="form-label">Jumlah <span class="required">*</span></label>
+                    <input type="number" name="jumlah" class="input input-jumlah" 
+                           placeholder="0" min="1" onchange="hitungSubtotal(this)" required>
+                  </div>
+                </div>
+                <div class="item-subtotal">
+                  Subtotal: <strong class="subtotal-value">Rp 0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total & Submit -->
+          <div class="form-total-section">
+            <div class="total-display">
+              <span class="total-label">TOTAL PEMBELIAN</span>
+              <span class="total-value" id="totalKeseluruhan">Rp 0</span>
+            </div>
+            <div class="form-actions">
+              <a href="/pembelian" class="btn btn-outline">Batal</a>
+              <button type="submit" class="btn btn-primary btn-lg">
+                💾 Simpan Pembelian
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Kanan: Daftar Produk Referensi -->
+  <div class="form-sidebar">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Referensi Stok Produk</h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="produk-ref-list">
+          <% produk.forEach(p => { %>
+            <div class="produk-ref-item" onclick="quickAddProduk(<%= p.id %>)">
+              <div class="produk-ref-info">
+                <div class="produk-ref-name"><%= p.nama_produk %></div>
+                <div class="produk-ref-meta"><%= formatRupiah(p.harga_beli) %> / <%= p.satuan %></div>
+              </div>
+              <div class="produk-ref-stok <%= p.jumlah_stock <= 10 ? 'stok-rendah' : '' %>">
+                <%= p.jumlah_stock %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Template HTML untuk item baru (disembunyikan) -->
+<template id="itemTemplate">
+  <div class="item-row" id="item-INDEX">
+    <div class="item-row-header">
+      <span class="item-number">Item INDEX_LABEL</span>
+      <button type="button" class="btn-remove-item" onclick="removeItem(this)">✕ Hapus</button>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Produk *</label>
+        <select name="produk_id" class="input select-produk" onchange="fillHarga(this)" required>
+          <option value="">— Pilih Produk —</option>
+          PRODUK_OPTIONS
+        </select>
+      </div>
+      <div class="form-group form-group-sm">
+        <label class="form-label">Harga Beli (Rp) *</label>
+        <input type="number" name="harga_beli" class="input input-harga" placeholder="0" min="0" step="100" onchange="hitungSubtotal(this)" required>
+      </div>
+      <div class="form-group form-group-sm">
+        <label class="form-label">Jumlah *</label>
+        <input type="number" name="jumlah" class="input input-jumlah" placeholder="0" min="1" onchange="hitungSubtotal(this)" required>
+      </div>
+    </div>
+    <div class="item-subtotal">
+      Subtotal: <strong class="subtotal-value">Rp 0</strong>
+    </div>
+  </div>
+</template>
+
+<script>
+// Data produk dari server untuk digunakan di JS
+const produkData = <%- JSON.stringify(produk) %>;
+let itemCount = 1;
+
+// Generate options HTML untuk select produk
+function buildOptions() {
+  return produkData.map(p =>
+    `<option value="${p.id}" data-harga="${p.harga_beli}" data-stok="${p.jumlah_stock}" data-satuan="${p.satuan}">
+      ${p.kode_produk} - ${p.nama_produk} (Stok: ${p.jumlah_stock})
+    </option>`
+  ).join('');
+}
+
+// Tambah baris item baru
+document.getElementById('btnTambahItem').addEventListener('click', function() {
+  const tmpl = document.getElementById('itemTemplate');
+  const html = tmpl.innerHTML
+    .replace(/INDEX/g, itemCount)
+    .replace('INDEX_LABEL', itemCount + 1)
+    .replace('PRODUK_OPTIONS', buildOptions());
+
+  const container = document.getElementById('itemsContainer');
+  const div = document.createElement('div');
+  div.innerHTML = html.trim();
+  container.appendChild(div.firstElementChild);
+
+  // Aktifkan tombol hapus di item pertama kalau ada lebih dari 1
+  document.querySelectorAll('.btn-remove-item')[0].disabled = false;
+  itemCount++;
+  updateItemNumbers();
+});
+
+// Hapus item
+function removeItem(btn) {
+  const row = btn.closest('.item-row');
+  row.remove();
+  updateItemNumbers();
+  hitungTotal();
+  // Disable tombol hapus kalau item hanya 1
+  const rows = document.querySelectorAll('.item-row');
+  if (rows.length === 1) rows[0].querySelector('.btn-remove-item').disabled = true;
+}
+
+// Update nomor label item
+function updateItemNumbers() {
+  document.querySelectorAll('.item-row').forEach((row, i) => {
+    row.querySelector('.item-number').textContent = `Item ${i + 1}`;
+  });
+}
+
+// Auto-fill harga beli saat produk dipilih
+function fillHarga(select) {
+  const opt = select.selectedOptions[0];
+  if (!opt || !opt.value) return;
+  const row = select.closest('.item-row');
+  row.querySelector('.input-harga').value = opt.dataset.harga;
+  hitungSubtotal(row.querySelector('.input-jumlah'));
+}
+
+// Hitung subtotal per item
+function hitungSubtotal(input) {
+  const row = input.closest('.item-row');
+  const harga = parseFloat(row.querySelector('.input-harga').value) || 0;
+  const jumlah = parseInt(row.querySelector('.input-jumlah').value) || 0;
+  const subtotal = harga * jumlah;
+  row.querySelector('.subtotal-value').textContent = formatRupiah(subtotal);
+  hitungTotal();
+}
+
+// Hitung total keseluruhan
+function hitungTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    const harga = parseFloat(row.querySelector('.input-harga').value) || 0;
+    const jumlah = parseInt(row.querySelector('.input-jumlah').value) || 0;
+    total += harga * jumlah;
+  });
+  document.getElementById('totalKeseluruhan').textContent = formatRupiah(total);
+}
+
+// Quick-add produk dari sidebar referensi
+function quickAddProduk(produkId) {
+  const rows = document.querySelectorAll('.item-row');
+  let emptyRow = null;
+  rows.forEach(row => {
+    const sel = row.querySelector('.select-produk');
+    if (!sel.value && !emptyRow) emptyRow = row;
+  });
+
+  if (!emptyRow) {
+    document.getElementById('btnTambahItem').click();
+    emptyRow = document.querySelectorAll('.item-row')[document.querySelectorAll('.item-row').length - 1];
+  }
+
+  const select = emptyRow.querySelector('.select-produk');
+  select.value = produkId;
+  fillHarga(select);
+  emptyRow.querySelector('.input-jumlah').focus();
+}
+
+// Format rupiah untuk tampilan JS
+function formatRupiah(n) {
+  return 'Rp ' + Math.round(n).toLocaleString('id-ID');
+}
+</script>
+
+<%- include('../footer.ejs') %>

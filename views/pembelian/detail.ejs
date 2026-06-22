@@ -1,0 +1,262 @@
+<%- include('../header.ejs') %>
+
+<div class="breadcrumb">
+  <a href="/pembelian">Pembelian</a> <span>›</span> <%= pembelian.nomor_po %>
+</div>
+
+<!-- Header Info PO -->
+<div class="detail-header">
+  <div class="detail-title-block">
+    <div class="detail-po"><%= pembelian.nomor_po %></div>
+    <div class="detail-supplier">
+      Supplier: <strong><%= pembelian.supplier %></strong>
+      &nbsp;·&nbsp;
+      <%= formatDate(pembelian.tanggal_pembelian) %>
+    </div>
+  </div>
+  <div class="detail-actions">
+    <% if (pembelian.status === 'aktif') { %>
+      <!-- Tombol batalkan -->
+      <form method="POST" action="/pembelian/<%= pembelian.id %>/batal" id="formBatal">
+        <button type="submit" class="btn btn-danger"
+          data-confirm="Membatalkan pembelian ini akan mengembalikan stok semua produk yang terlibat. Tindakan ini tidak bisa dibatalkan."
+          data-confirm-title="Batalkan Pembelian <%= pembelian.nomor_po %>?">
+          ✕ Batalkan Pembelian
+        </button>
+      </form>
+    <% } else { %>
+      <!-- Status dibatalkan: tombol aktifkan kembali -->
+      <form method="POST" action="/pembelian/<%= pembelian.id %>/aktifkan" id="formAktifkan">
+        <button type="submit" class="btn btn-success"
+          data-confirm="Mengaktifkan kembali pembelian ini akan menambah stok produk yang terlibat. Pastikan stok sudah valid."
+          data-confirm-title="Aktifkan Kembali <%= pembelian.nomor_po %>?">
+          ✓ Aktifkan Kembali
+        </button>
+      </form>
+    <% } %>
+    <a href="/pembelian" class="btn btn-outline">← Kembali</a>
+  </div>
+</div>
+
+<!-- Status Banner -->
+<% if (pembelian.status === 'dibatalkan') { %>
+  <div class="alert alert-error" style="margin: 0 0 20px; position:relative;">
+    <span class="alert-icon">✗</span>
+    <strong>Pembelian Ini Telah Dibatalkan.</strong>&nbsp;
+    Stok produk sudah dikembalikan ke kondisi sebelum pembelian ini.
+    Dibatalkan pada: <%= formatDate(pembelian.updated_at) %>
+  </div>
+<% } %>
+
+<!-- Dua Kolom: Info PO + Ringkasan -->
+<div class="detail-grid" style="margin-bottom: 20px;">
+
+  <!-- Info Pembelian -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Informasi Pembelian</h2>
+      <span class="badge badge-<%= pembelian.status === 'aktif' ? 'success' : 'danger' %> badge-lg">
+        <%= pembelian.status === 'aktif' ? '✓ Aktif' : '✗ Dibatalkan' %>
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="info-rows">
+        <div class="info-row">
+          <span class="info-label">Nomor PO</span>
+          <code class="mono"><%= pembelian.nomor_po %></code>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Supplier</span>
+          <span class="info-value"><%= pembelian.supplier %></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Tanggal Pembelian</span>
+          <span class="info-value"><%= formatDate(pembelian.tanggal_pembelian) %></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Dibuat Pada</span>
+          <span class="info-value"><%= formatDate(pembelian.created_at) %></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Status</span>
+          <span class="info-value">
+            <span class="badge badge-<%= pembelian.status === 'aktif' ? 'success' : 'danger' %>">
+              <%= pembelian.status === 'aktif' ? 'Aktif' : 'Dibatalkan' %>
+            </span>
+          </span>
+        </div>
+        <% if (pembelian.catatan) { %>
+          <div class="info-row" style="align-items:flex-start; padding-top:14px;">
+            <span class="info-label">Catatan</span>
+            <span class="info-value" style="text-align:left; font-weight:400; color:var(--text-sub);">
+              <%= pembelian.catatan %>
+            </span>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ringkasan Nilai -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Ringkasan Nilai</h2>
+    </div>
+    <div class="card-body">
+      <div style="text-align:center; padding: 20px 0;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-bottom:8px;">
+          Total Nilai Pembelian
+        </div>
+        <div style="font-size: 32px; font-weight: 900; color: <%= pembelian.status === 'aktif' ? 'var(--accent-dark)' : 'var(--text-muted)' %>; line-height:1;">
+          <%= formatRupiah(pembelian.total_harga) %>
+        </div>
+        <% if (pembelian.status === 'dibatalkan') { %>
+          <div style="margin-top:8px; font-size:12.5px; color:var(--red-text); background:var(--red-bg); padding:4px 12px; border-radius:4px; display:inline-block;">
+            Tidak dihitung dalam total aktif
+          </div>
+        <% } %>
+      </div>
+      <div class="info-rows" style="margin-top:8px;">
+        <div class="info-row">
+          <span class="info-label">Jumlah Item</span>
+          <span class="info-value"><%= detail.length %> produk</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Total Unit</span>
+          <span class="info-value">
+            <%= detail.reduce((s, d) => s + d.jumlah, 0) %> unit
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Rata-rata per Item</span>
+          <span class="info-value">
+            <%= detail.length > 0 ? formatRupiah(pembelian.total_harga / detail.length) : 'Rp 0' %>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabel Detail Item -->
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Detail Item Pembelian (<%= detail.length %> produk)</h2>
+  </div>
+  <div class="card-body p-0">
+    <% if (detail.length === 0) { %>
+      <div class="empty-state">Tidak ada item dalam pembelian ini.</div>
+    <% } else { %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Kode</th>
+            <th>Nama Produk</th>
+            <th>Kategori</th>
+            <th class="text-center">Jumlah</th>
+            <th class="text-center">Satuan</th>
+            <th class="text-right">Harga Beli</th>
+            <th class="text-right">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% detail.forEach((item, i) => { %>
+            <tr>
+              <td style="color:var(--text-muted); font-size:12px;"><%= i + 1 %></td>
+              <td>
+                <a href="/produk/<%= item.produk_id %>/detail">
+                  <code class="mono"><%= item.kode_produk %></code>
+                </a>
+              </td>
+              <td>
+                <div class="product-name"><%= item.nama_produk %></div>
+              </td>
+              <td><span class="category-tag"><%= item.kategori %></span></td>
+              <td class="text-center"><strong><%= item.jumlah %></strong></td>
+              <td class="text-center" style="color:var(--text-muted);"><%= item.satuan %></td>
+              <td class="text-right"><%= formatRupiah(item.harga_beli) %></td>
+              <td class="text-right"><strong><%= formatRupiah(item.subtotal) %></strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <!-- Baris Total -->
+        <tfoot>
+          <tr style="background: #f8f9fc;">
+            <td colspan="4" style="padding:14px 16px; font-weight:700; font-size:13px; color:var(--text-sub);">
+              TOTAL
+            </td>
+            <td class="text-center" style="padding:14px 16px; font-weight:700;">
+              <%= detail.reduce((s, d) => s + d.jumlah, 0) %>
+            </td>
+            <td></td>
+            <td></td>
+            <td class="text-right" style="padding:14px 16px; font-size:16px; font-weight:900; color:var(--accent-dark);">
+              <%= formatRupiah(pembelian.total_harga) %>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<!-- Action Bottom -->
+<div class="action-bar">
+  <a href="/pembelian" class="btn btn-outline">← Kembali ke Daftar</a>
+  <a href="/pembelian/tambah" class="btn btn-primary">+ Buat Pembelian Baru</a>
+</div>
+
+<!-- Modal Konfirmasi Global -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Konfirmasi</div>
+    <div class="modal-desc"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="modalCancelBtn">Batal</button>
+      <button class="btn btn-danger" id="modalOkBtn">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const confirmButtons = document.querySelectorAll('[data-confirm]');
+    const modal = document.getElementById('confirmModal');
+    const modalTitle = modal.querySelector('.modal-title');
+    const modalDesc = modal.querySelector('.modal-desc');
+    const cancelBtn = document.getElementById('modalCancelBtn');
+    const okBtn = document.getElementById('modalOkBtn');
+    let targetForm = null;
+
+    confirmButtons.forEach(button => {
+      button.addEventListener('click', function () {
+        // Cari form terdekat dari tombol yang diklik
+        targetForm = this.closest('form');
+        
+        // Isi teks modal konfirmasi dari data-attribute tombol
+        modalTitle.textContent = this.getAttribute('data-confirm-title') || 'Konfirmasi';
+        modalDesc.textContent = this.getAttribute('data-confirm');
+        
+        // Tampilkan modal
+        modal.style.display = 'flex'; 
+      });
+    });
+
+    // Jika tombol Batal di modal diklik
+    cancelBtn.addEventListener('click', function () {
+      modal.style.display = 'none';
+      targetForm = null;
+    });
+
+    // Jika tombol Ya, Lanjutkan di modal diklik
+    okBtn.addEventListener('click', function () {
+      if (targetForm) {
+        targetForm.submit(); // Kirim form asli ke rute /batal atau /aktifkan
+      }
+    });
+  });
+</script>
+
+<%- include('../footer.ejs') %>

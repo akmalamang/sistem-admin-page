@@ -1,0 +1,136 @@
+<%- include('./header.ejs') %>
+
+<!-- Stat Cards -->
+<div class="stat-grid">
+  <div class="stat-card stat-blue">
+    <div class="stat-icon">📦</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.totalProduk %></div>
+      <div class="stat-label">Total Produk</div>
+    </div>
+  </div>
+  <div class="stat-card stat-green">
+    <div class="stat-icon">🛒</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.totalPembelian %></div>
+      <div class="stat-label">Pembelian Aktif</div>
+    </div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-icon">💰</div>
+    <div class="stat-body">
+      <div class="stat-value stat-value-sm"><%= formatRupiah(stats.nilaiPembelian) %></div>
+      <div class="stat-label">Total Nilai Pembelian</div>
+    </div>
+  </div>
+  <div class="stat-card stat-red">
+    <div class="stat-icon">⚠️</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.stokMenipis %></div>
+      <div class="stat-label">Stok Menipis</div>
+    </div>
+  </div>
+</div>
+
+<!-- Grid dua kolom -->
+<div class="dashboard-grid">
+
+  <!-- Pembelian Terbaru -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Pembelian Terbaru</h2>
+      <a href="/pembelian" class="btn-text">Lihat Semua →</a>
+    </div>
+    <div class="card-body p-0">
+      <% if (pembelianTerbaru.length === 0) { %>
+        <div class="empty-state">Belum ada data pembelian</div>
+      <% } else { %>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>No. PO</th>
+              <th>Supplier</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% pembelianTerbaru.forEach(p => { %>
+              <tr class="table-row-link" onclick="location.href='/pembelian/<%= p.id %>'">
+                <td><code class="mono"><%= p.nomor_po %></code></td>
+                <td><%= p.supplier %></td>
+                <td class="text-right"><%= formatRupiah(p.total_harga) %></td>
+                <td>
+                  <span class="badge badge-<%= p.status === 'aktif' ? 'success' : 'danger' %>">
+                    <%= p.status === 'aktif' ? '✓ Aktif' : '✗ Batal' %>
+                  </span>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Stok Menipis -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">⚠️ Stok Menipis</h2>
+      <a href="/produk" class="btn-text">Lihat Produk →</a>
+    </div>
+    <div class="card-body p-0">
+      <% if (produkMenipis.length === 0) { %>
+        <div class="empty-state">
+          <span style="font-size:2rem">✅</span><br>
+          Semua stok dalam kondisi aman
+        </div>
+      <% } else { %>
+        <div class="stock-list">
+          <% produkMenipis.forEach(p => { %>
+            <div class="stock-item">
+              <div class="stock-info">
+                <div class="stock-name"><%= p.nama_produk %></div>
+                <div class="stock-meta"><%= p.kode_produk %> · <%= p.kategori %></div>
+              </div>
+              <div class="stock-level">
+                <div class="stock-count <%= p.jumlah_stock === 0 ? 'stock-zero' : 'stock-low' %>">
+                  <%= p.jumlah_stock %> <%= p.satuan %>
+                </div>
+                <div class="stock-min">Min: <%= p.stok_minimum %></div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+    <div class="card-footer">
+      <a href="/pembelian/tambah" class="btn btn-primary btn-sm btn-block">
+        + Buat Pembelian Baru
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Distribusi Kategori -->
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Distribusi Kategori Produk</h2>
+  </div>
+  <div class="card-body">
+    <div class="kategori-grid">
+      <% distribusiKategori.forEach(k => { %>
+        <div class="kategori-card">
+          <div class="kategori-name"><%= k.kategori %></div>
+          <div class="kategori-stats">
+            <span><%= k.jumlah %> produk</span>
+            <span class="sep">·</span>
+            <span><%= k.total_stock || 0 %> unit stok</span>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+
+<%- include('./footer.ejs') %>

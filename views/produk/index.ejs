@@ -1,0 +1,65 @@
+<%- include('../header.ejs') %>
+
+<div class="stat-grid stat-grid-3">
+  <div class="stat-card">
+    <div class="stat-icon">📦</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.total %></div>
+      <div class="stat-label">Total Produk</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">⚠️</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.kritis %></div>
+      <div class="stat-label">Stok Kritis</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">✓</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.aktif %></div>
+      <div class="stat-label">Produk Tersedia</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+  <div class="card-header">
+    <h2 class="card-title">Daftar Produk & Stok Barang</h2>
+  </div>
+  <div class="card-body p-0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Kode</th>
+          <th>Nama Produk</th>
+          <th>Kategori</th>
+          <th class="text-right">Harga Jual</th>
+          <th class="text-right">Stok</th>
+          <th class="text-center">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% produk.forEach(p => { %>
+          <tr>
+            <td><code class="mono"><%= p.kode_produk %></code></td>
+            <td><strong><%= p.nama_produk %></strong></td>
+            <td><span class="category-tag"><%= p.kategori %></span></td>
+            <td class="text-right">Rp <%= p.harga_jual.toLocaleString('id-ID') %></td>
+            <td class="text-right">
+              <span class="badge badge-<%= p.jumlah_stock <= p.stok_minimum ? 'warning' : 'success' %>">
+                <%= p.jumlah_stock %> <%= p.satuan %>
+              </span>
+            </td>
+            <td class="text-center">
+              <a href="/produk/<%= p.id %>/detail" class="btn btn-sm btn-outline">Detail</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../footer.ejs') %>

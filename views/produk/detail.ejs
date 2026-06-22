@@ -1,0 +1,144 @@
+<%- include('../header.ejs') %>
+
+<div class="breadcrumb">
+  <a href="/produk">Produk</a> <span>›</span> <%= produk.nama_produk %>
+</div>
+
+<div class="detail-grid">
+  <!-- Info Produk -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Informasi Produk</h2>
+    </div>
+    <div class="card-body">
+      <div class="info-rows">
+        <div class="info-row">
+          <span class="info-label">Kode Produk</span>
+          <code class="mono info-value"><%= produk.kode_produk %></code>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Nama Produk</span>
+          <span class="info-value"><%= produk.nama_produk %></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Kategori</span>
+          <span class="info-value"><span class="category-tag"><%= produk.kategori %></span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Satuan</span>
+          <span class="info-value"><%= produk.satuan %></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Harga Beli</span>
+          <span class="info-value text-blue"><%= formatRupiah(produk.harga_beli) %></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Harga Jual</span>
+          <span class="info-value text-green"><strong><%= formatRupiah(produk.harga_jual) %></strong></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Margin</span>
+          <span class="info-value">
+            <%= formatRupiah(produk.harga_jual - produk.harga_beli) %>
+            (<%= Math.round((produk.harga_jual - produk.harga_beli) / produk.harga_beli * 100) %>%)
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Stock -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Status Stok</h2>
+    </div>
+    <div class="card-body">
+      <div class="stock-display">
+        <div class="stock-number <%= produk.jumlah_stock === 0 ? 'stock-zero' : (produk.jumlah_stock <= produk.stok_minimum ? 'stock-low' : 'stock-ok') %>">
+          <%= produk.jumlah_stock %>
+        </div>
+        <div class="stock-unit"><%= produk.satuan %> tersedia</div>
+      </div>
+      <div class="stock-bar-wrap">
+        <% const persen = Math.min(100, Math.round(produk.jumlah_stock / Math.max(produk.stok_minimum * 3, 1) * 100)); %>
+        <div class="stock-bar">
+          <div class="stock-bar-fill <%= persen <= 33 ? 'fill-red' : persen <= 66 ? 'fill-yellow' : 'fill-green' %>" style="width:<%= persen %>%"></div>
+        </div>
+        <div class="stock-bar-labels">
+          <span>0</span>
+          <span>Min: <%= produk.stok_minimum %></span>
+        </div>
+      </div>
+      <div class="info-rows" style="margin-top:1rem">
+        <div class="info-row">
+          <span class="info-label">Stok Minimum</span>
+          <span class="info-value"><%= produk.stok_minimum %> <%= produk.satuan %></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Kondisi</span>
+          <span class="info-value">
+            <% if (produk.jumlah_stock === 0) { %>
+              <span class="badge badge-danger">Stok Habis</span>
+            <% } else if (produk.jumlah_stock <= produk.stok_minimum) { %>
+              <span class="badge badge-warning">Stok Menipis</span>
+            <% } else { %>
+              <span class="badge badge-success">Stok Aman</span>
+            <% } %>
+          </span>
+        </div>
+      </div>
+      <a href="/pembelian/tambah" class="btn btn-primary btn-block" style="margin-top:1rem">
+        + Buat Pembelian
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Riwayat Pembelian -->
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Riwayat Pembelian (10 Terakhir)</h2>
+  </div>
+  <div class="card-body p-0">
+    <% if (riwayat.length === 0) { %>
+      <div class="empty-state">Belum ada riwayat pembelian untuk produk ini</div>
+    <% } else { %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>No. PO</th>
+            <th>Supplier</th>
+            <th>Tanggal</th>
+            <th class="text-right">Jumlah</th>
+            <th class="text-right">Harga Beli</th>
+            <th class="text-right">Subtotal</th>
+            <th class="text-center">Status PO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% riwayat.forEach(r => { %>
+            <tr>
+              <td><code class="mono"><%= r.nomor_po %></code></td>
+              <td><%= r.supplier %></td>
+              <td><%= formatDate(r.tanggal_pembelian) %></td>
+              <td class="text-right"><%= r.jumlah %></td>
+              <td class="text-right"><%= formatRupiah(r.harga_beli) %></td>
+              <td class="text-right"><strong><%= formatRupiah(r.subtotal) %></strong></td>
+              <td class="text-center">
+                <span class="badge badge-<%= r.status === 'aktif' ? 'success' : 'danger' %>">
+                  <%= r.status %>
+                </span>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<div class="action-bar">
+  <a href="/produk" class="btn btn-outline">← Kembali ke Daftar Produk</a>
+</div>
+
+<%- include('../footer.ejs') %>

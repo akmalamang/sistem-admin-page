@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — TokoAdmin</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🏪</div>
+    <div class="brand-text">
+      <span class="brand-name">TokoAdmin</span>
+      <span class="brand-sub">Sistem Manajemen</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Menu Utama</div>
+    <a href="/" class="nav-item <%= activePage === 'dashboard' ? 'active' : '' %>">
+      <span class="nav-icon">⊞</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="/produk" class="nav-item <%= activePage === 'produk' ? 'active' : '' %>">
+      <span class="nav-icon">📦</span>
+      <span>Produk & Stock</span>
+    </a>
+    <a href="/pembelian" class="nav-item <%= activePage === 'pembelian' ? 'active' : '' %>">
+      <span class="nav-icon">🛒</span>
+      <span>Pembelian</span>
+    </a>
+    <a href="/pembelian/tambah" class="nav-item nav-item-cta">
+      <span class="nav-icon">＋</span>
+      <span>Input Pembelian</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="admin-badge">
+      <div class="admin-avatar">A</div>
+      <div>
+        <div class="admin-name">Administrator</div>
+        <div class="admin-role">Super Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<div class="main-wrapper">
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1 class="page-title"><%= title %></h1>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date">
+        <%= new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) %>
+      </span>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  <% if (flash_success && flash_success.length > 0) { %>
+    <div class="alert alert-success">
+      <span class="alert-icon">✓</span>
+      <%= flash_success[0] %>
+      <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+  <% } %>
+  <% if (flash_error && flash_error.length > 0) { %>
+    <div class="alert alert-error">
+      <span class="alert-icon">!</span>
+      <%= flash_error[0] %>
+      <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+    </div>
+  <% } %>
+
+  <main class="content">

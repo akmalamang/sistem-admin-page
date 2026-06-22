@@ -1,0 +1,118 @@
+<%- include('../header.ejs') %>
+
+<!-- Mini Stats -->
+<div class="stat-grid stat-grid-3">
+  <div class="stat-card stat-green">
+    <div class="stat-icon">✓</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.aktif %></div>
+      <div class="stat-label">Pembelian Aktif</div>
+    </div>
+  </div>
+  <div class="stat-card stat-red">
+    <div class="stat-icon">✗</div>
+    <div class="stat-body">
+      <div class="stat-value"><%= stats.dibatalkan %></div>
+      <div class="stat-label">Dibatalkan</div>
+    </div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-icon">💰</div>
+    <div class="stat-body">
+      <div class="stat-value stat-value-sm"><%= formatRupiah(stats.total_nilai) %></div>
+      <div class="stat-label">Total Nilai Aktif</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter & Search -->
+<div class="card">
+  <div class="card-body">
+    <form method="GET" action="/pembelian" class="filter-form">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Cari</label>
+          <input type="text" name="search" class="input" placeholder="No. PO atau Supplier..." value="<%= filter.search %>">
+        </div>
+        <div class="filter-group filter-group-sm">
+          <label class="filter-label">Status</label>
+          <select name="status" class="input">
+            <option value="semua" <%= filter.status === 'semua' ? 'selected' : '' %>>Semua Status</option>
+            <option value="aktif" <%= filter.status === 'aktif' ? 'selected' : '' %>>Aktif</option>
+            <option value="dibatalkan" <%= filter.status === 'dibatalkan' ? 'selected' : '' %>>Dibatalkan</option>
+          </select>
+        </div>
+        <div class="filter-group filter-group-sm">
+          <label class="filter-label">Dari Tanggal</label>
+          <input type="date" name="from" class="input" value="<%= filter.from %>">
+        </div>
+        <div class="filter-group filter-group-sm">
+          <label class="filter-label">Sampai Tanggal</label>
+          <input type="date" name="to" class="input" value="<%= filter.to %>">
+        </div>
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-primary">Filter</button>
+          <a href="/pembelian" class="btn btn-outline">Reset</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table Pembelian -->
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Daftar Transaksi Pembelian (<%= pembelian.length %>)</h2>
+    <a href="/pembelian/tambah" class="btn btn-primary btn-sm">+ Tambah Pembelian</a>
+  </div>
+  <div class="card-body p-0">
+    <% if (pembelian.length === 0) { %>
+      <div class="empty-state">
+        <span style="font-size:2.5rem">📋</span><br>
+        Tidak ada data pembelian.<br>
+        <a href="/pembelian/tambah" class="btn btn-primary" style="margin-top:1rem">+ Tambah Pembelian Pertama</a>
+      </div>
+    <% } else { %>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>No. PO</th>
+            <th>Supplier</th>
+            <th>Tanggal</th>
+            <th class="text-center">Item</th>
+            <th class="text-right">Total Harga</th>
+            <th class="text-center">Status</th>
+            <th class="text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pembelian.forEach(p => { %>
+            <tr class="<%= p.status === 'dibatalkan' ? 'row-cancelled' : '' %>">
+              <td><code class="mono"><%= p.nomor_po %></code></td>
+              <td><%= p.supplier %></td>
+              <td><%= formatDate(p.tanggal_pembelian) %></td>
+              <td class="text-center"><%= p.jumlah_item %> item</td>
+              <td class="text-right">
+                <% if (p.status === 'dibatalkan') { %>
+                  <span class="text-muted"><s><%= formatRupiah(p.total_harga) %></s></span>
+                <% } else { %>
+                  <strong><%= formatRupiah(p.total_harga) %></strong>
+                <% } %>
+              </td>
+              <td class="text-center">
+                <span class="badge badge-<%= p.status === 'aktif' ? 'success' : 'danger' %>">
+                  <%= p.status === 'aktif' ? '✓ Aktif' : '✗ Dibatalkan' %>
+                </span>
+              </td>
+              <td class="text-center">
+                <a href="/pembelian/<%= p.id %>" class="btn btn-outline btn-sm">Detail</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../footer.ejs') %>
